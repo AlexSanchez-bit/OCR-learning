@@ -1,6 +1,6 @@
 import json
 
-from constants import INDEX_MAP_PATH
+from character_cnn.constants import INDEX_MAP_PATH
 
 #save indexed chars
 def save_as_json(idx_to_char):
