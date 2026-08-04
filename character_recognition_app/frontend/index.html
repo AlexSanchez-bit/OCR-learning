@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Character Recognition</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 2rem; }
+    canvas { border: 1px solid #333; background: #fff; cursor: crosshair; touch-action: none; }
+    #result { font-size: 2rem; min-height: 2.5rem; }
+    #conf { color: #666; }
+    button { padding: 0.4rem 0.9rem; }
+  </style>
+</head>
+<body>
+  <h2>Draw a character</h2>
+  <canvas id="pad" width="280" height="280"></canvas>
+  <button id="clear">Clear</button>
+  <div id="result">–</div>
+  <div id="conf"></div>
+
+  <script>
+    const canvas = document.getElementById("pad");
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 18; ctx.lineCap = "round"; ctx.strokeStyle = "#000";
+
+    let drawing = false, dirty = false, timer = null;
+
+    const pos = (e) => {
+      const r = canvas.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    };
+
+    const start = (e) => { e.preventDefault(); drawing = true; const {x,y}=pos(e); ctx.beginPath(); ctx.moveTo(x,y); };
+    const move  = (e) => {
+      if (!drawing) return; e.preventDefault();
+      const {x,y}=pos(e); ctx.lineTo(x,y); ctx.stroke();
+      dirty = true;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(predict, 500);
+    };
+    const end   = () => { drawing = false; };
+
+    canvas.addEventListener("mousedown", start);
+    canvas.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", end);
+    canvas.addEventListener("touchstart", start);
+    canvas.addEventListener("touchmove", move);
+    canvas.addEventListener("touchend", end);
+
+    document.getElementById("clear").onclick = () => {
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("result").textContent = "–";
+      document.getElementById("conf").textContent = "";
+      dirty = false;
+    };
+
+    async function predict() {
+      if (!dirty) return;
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: canvas.toDataURL("image/png") }),
+      });
+      const { label, confidence } = await res.json();
+      document.getElementById("result").textContent = label;
+      document.getElementById("conf").textContent = `${(confidence*100).toFixed(1)}%`;
+    }
+  </script>
+</body>
+</html>
