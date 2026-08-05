@@ -24,6 +24,7 @@ class ModelInference():
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5,), std=(0.5,)),
         ])
+
     def inference(self,img):
         x = self.preprocess(img).unsqueeze(0)
         with torch.no_grad():
