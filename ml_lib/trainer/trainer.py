@@ -52,7 +52,7 @@ class Trainer:
             epoch_item.model_outputs.append(output.detach())
             epoch_item.expected_values.append(batch_labels.detach())
 
-        total_images = len(self.validation_loader)
+        total_images = len(self.train_loader.dataset)
         epoch_item.loss/=total_images
         epoch_item.accuracy /= total_images
 
@@ -73,7 +73,7 @@ class Trainer:
               epoch_item.model_outputs.append(output.detach())
               epoch_item.expected_values.append(batch_labels.detach())
 
-        total_images = len(self.validation_loader)
+        total_images = len(self.validation_loader.dataset)
         epoch_item.loss/=total_images
         epoch_item.accuracy /= total_images
         return epoch_item
