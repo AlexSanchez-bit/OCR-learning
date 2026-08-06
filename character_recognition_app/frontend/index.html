@@ -17,6 +17,7 @@
   <button id="clear">Clear</button>
   <div id="result">–</div>
   <div id="conf"></div>
+  <img id="filters" style="max-width: 100%; margin-top: 1rem;min-height: 25dvh;" />
 
   <script>
     const canvas = document.getElementById("pad");
@@ -63,9 +64,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: canvas.toDataURL("image/png") }),
       });
-      const { label, confidence } = await res.json();
+      const { label, confidence, filters } = await res.json();
       document.getElementById("result").textContent = label;
       document.getElementById("conf").textContent = `${(confidence*100).toFixed(1)}%`;
+      document.getElementById("filters").src = filters;
     }
   </script>
 </body>
