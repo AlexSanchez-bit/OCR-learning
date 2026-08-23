@@ -1,13 +1,12 @@
 import torch.nn as nn
 from torch import flatten
-from ml_lib.model_data_extractor.convolution_presenter import ConvolutionPresenter
 
 
-class CharacterModel(nn.Module,ConvolutionPresenter):
+class CharacterModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-        self.dropout = nn.Dropout(p=0.2) 
+        self.dropout = nn.Dropout(p=0.2)
         self.conv1 = nn.Conv2d(
             1,
             32,
@@ -46,6 +45,4 @@ class CharacterModel(nn.Module,ConvolutionPresenter):
         x=self.fc2(x)
         return x
 
-    def get_convolutions(self)->List[torch.Tensor]:
-      return [self.conv1,self.conv2]
 
