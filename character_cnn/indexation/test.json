@@ -1,211 +1,170 @@
 {
-  "id": "zap_987654321_enterprise",
-  "title": "Orquestador de Pedidos VIP: E-commerce ➔ IA ➔ CRM & ERP con Manejo de Rutas",
-  "status": "enabled",
-  "version": 3,
-  "created_at": "2026-09-10T14:20:00Z",
-  "settings": {
-    "error_handling": {
-      "autoretry": true,
-      "max_retries": 3,
-      "notify_on_failure": ["dev-ops@empresa.com"]
-    },
-    "rate_limiting": {
-      "max_execs_per_minute": 100
-    }
-  },
-  "steps": [
+  "system_id": "SYS-GLOBAL-INFRA-99",
+  "environment": "production",
+  "datacenter_clusters": [
     {
-      "id": "step_1_trigger",
-      "step_number": 1,
-      "type": "trigger",
-      "app": {
-        "id": "shopify",
-        "name": "Shopify",
-        "auth_connection_id": "conn_shopify_store_01"
-      },
-      "action_key": "new_order",
-      "params": {
-        "status": "paid",
-        "fulfillment_status": "unfulfilled"
-      }
-    },
-    {
-      "id": "step_2_formatter",
-      "step_number": 2,
-      "type": "action",
-      "app": {
-        "id": "formatter_by_zapier",
-        "name": "Formatter by Zapier"
-      },
-      "action_key": "text_transform",
-      "params": {
-        "transform": "capitalize",
-        "input": "{{step_1_trigger.data.customer.first_name}} {{step_1_trigger.data.customer.last_name}}"
-      }
-    },
-    {
-      "id": "step_3_webhook_ai",
-      "step_number": 3,
-      "type": "action",
-      "app": {
-        "id": "webhooks_by_zapier",
-        "name": "Webhooks by Zapier"
-      },
-      "action_key": "custom_request",
-      "params": {
-        "method": "POST",
-        "url": "https://api.empresa.com/v1/ai/risk-assessment",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer {{secret.AI_API_KEY}}"
-        },
-        "data": "{\n  \"order_id\": \"{{step_1_trigger.data.id}}\",\n  \"total_price\": {{step_1_trigger.data.total_price}},\n  \"customer_email\": \"{{step_1_trigger.data.email}}\",\n  \"shipping_address\": {\n    \"country\": \"{{step_1_trigger.data.shipping_address.country_code}}\",\n    \"zip\": \"{{step_1_trigger.data.shipping_address.zip}}\"\n  }\n}"
-      }
-    },
-    {
-      "id": "step_4_path_router",
-      "step_number": 4,
-      "type": "router",
-      "app": {
-        "id": "paths_by_zapier",
-        "name": "Paths by Zapier"
-      },
-      "paths": [
-        {
-          "path_id": "path_a_high_value_vip",
-          "title": "Ruta A: Clientes VIP (Monto > $1,000 USD y Bajo Riesgo)",
-          "conditions": [
-            {
-              "field": "{{step_1_trigger.data.total_price}}",
-              "operator": "greater_than",
-              "value": "1000"
-            },
-            {
-              "field": "{{step_3_webhook_ai.response.body.risk_score}}",
-              "operator": "less_than",
-              "value": "0.3"
-            }
-          ],
-          "steps": [
-            {
-              "id": "step_4a_1_hubspot",
-              "step_number": 5,
-              "type": "action",
-              "app": {
-                "id": "hubspot",
-                "name": "HubSpot",
-                "auth_connection_id": "conn_hubspot_prod"
-              },
-              "action_key": "create_or_update_contact",
-              "params": {
-                "email": "{{step_1_trigger.data.email}}",
-                "properties": {
-                  "firstname": "{{step_1_trigger.data.customer.first_name}}",
-                  "lastname": "{{step_1_trigger.data.customer.last_name}}",
-                  "lifecyclestage": "customer",
-                  "hs_lead_status": "VIP_PRIORITY",
-                  "total_revenue": "{{step_1_trigger.data.total_price}}"
-                }
-              }
-            },
-            {
-              "id": "step_4a_2_looping",
-              "step_number": 6,
-              "type": "action",
-              "app": {
-                "id": "looping_by_zapier",
-                "name": "Looping by Zapier"
-              },
-              "action_key": "loop_line_items",
-              "params": {
-                "values": {
-                  "product_ids": "{{step_1_trigger.data.line_items[].product_id}}",
-                  "product_names": "{{step_1_trigger.data.line_items[].name}}",
-                  "quantities": "{{step_1_trigger.data.line_items[].quantity}}",
-                  "unit_prices": "{{step_1_trigger.data.line_items[].price}}"
-                }
-              },
-              "loop_steps": [
+      "cluster_id": "us-east-cluster-01",
+      "region": "us-east-1",
+      "status": "operational",
+      "network_topology": {
+        "vpc_id": "vpc-0a1b2c3d4e5f6g7h8",
+        "subnets": [
+          {
+            "subnet_id": "sub-11111",
+            "zone": "us-east-1a",
+            "routing_table": {
+              "routes": [
                 {
-                  "id": "step_4a_2_sub_inventory",
-                  "type": "action",
-                  "app": {
-                    "id": "postgres",
-                    "name": "PostgreSQL Database"
-                  },
-                  "action_key": "custom_query",
-                  "params": {
-                    "query": "UPDATE inventory SET stock = stock - {{loop.quantities}} WHERE sku_id = '{{loop.product_ids}}';"
-                  }
+                  "destination": "0.0.0.0/0",
+                  "target": "igw-99999",
+                  "status": "active"
+                },
+                {
+                  "destination": "10.0.0.0/16",
+                  "target": "local",
+                  "status": "active"
                 }
               ]
             },
-            {
-              "id": "step_4a_3_slack_vip",
-              "step_number": 7,
-              "type": "action",
-              "app": {
-                "id": "slack",
-                "name": "Slack",
-                "auth_connection_id": "conn_slack_workspace"
+            "security_groups": [
+              {
+                "group_id": "sg-sec-web",
+                "rules": {
+                  "inbound": [
+                    {
+                      "protocol": "tcp",
+                      "port_range": [80, 443],
+                      "source": "0.0.0.0/0",
+                      "action": "ALLOW"
+                    }
+                  ],
+                  "outbound": [
+                    {
+                      "protocol": "ALL",
+                      "port_range": null,
+                      "destination": "0.0.0.0/0",
+                      "action": "ALLOW"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "nodes": [
+        {
+          "node_id": "node-compute-001",
+          "hardware": {
+            "specs": {
+              "cpu": {
+                "cores": 64,
+                "architecture": "x86_64",
+                "features": ["AVX512", "AES-NI"]
               },
-              "action_key": "send_channel_message",
-              "params": {
-                "channel_id": "C_VIP_SALES",
-                "message_text": "🎉 *NUEVO PEDIDO VIP RECIBIDO*\n• *Cliente:* {{step_2_formatter.output.result}}\n• *Monto:* ${{step_1_trigger.data.total_price}} {{step_1_trigger.data.currency}}\n• *Score de Riesgo IA:* {{step_3_webhook_ai.response.body.risk_score}}\n• *HubSpot ID:* {{step_4a_1_hubspot.data.vid}}",
-                "attachments": [
+              "memory": {
+                "total_gb": 256,
+                "type": "DDR5",
+                "ecc": true
+              }
+            }
+          },
+          "telemetry_agents": [
+            {
+              "agent_name": "MetricsCollector",
+              "version": "3.4.1",
+              "config": {
+                "scrape_interval_seconds": 15,
+                "destinations": [
                   {
-                    "fallback": "Detalles del pedido",
-                    "color": "#36a64f",
-                    "fields": [
+                    "type": "prometheus",
+                    "endpoint": "https://prom-internal.local/api/v1/write",
+                    "auth": {
+                      "method": "bearer_token",
+                      "secret_ref": "env:PROM_SECRET_TOKEN"
+                    }
+                  }
+                ],
+                "filters": {
+                  "include_metrics": ["cpu_usage", "memory_pressure", "disk_iops"],
+                  "thresholds": {
+                    "alert_on": [
                       {
-                        "title": "Dirección de Envío",
-                        "value": "{{step_1_trigger.data.shipping_address.address1}}, {{step_1_trigger.data.shipping_address.city}}",
-                        "short": true
-                      },
-                      {
-                        "title": "Items Totales",
-                        "value": "{{step_1_trigger.data.line_items.length}}",
-                        "short": true
+                        "metric": "cpu_usage",
+                        "condition": "gt",
+                        "value": 85,
+                        "duration_minutes": 5,
+                        "escalation": {
+                          "level_1": "slack-alert-channel",
+                          "level_2": {
+                            "pagerduty_service_key": "pd-service-key-888",
+                            "auto_remediate": {
+                              "enabled": true,
+                              "action": "scale_out",
+                              "max_instances": 10
+                            }
+                          }
+                        }
                       }
                     ]
                   }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "path_id": "path_b_high_risk",
-          "title": "Ruta B: Alerta de Fraude / Alto Riesgo",
-          "conditions": [
-            {
-              "field": "{{step_3_webhook_ai.response.body.risk_score}}",
-              "operator": "greater_than_or_equal_to",
-              "value": "0.3"
-            }
-          ],
-          "steps": [
-            {
-              "id": "step_4b_1_jira",
-              "step_number": 5,
-              "type": "action",
-              "app": {
-                "id": "jira",
-                "name": "Jira Software"
-              },
-              "action_key": "create_issue",
-              "params": {
-                "project": "FRAUD",
-                "issue_type": "Task",
-                "summary": "REVISAR: Posible fraude en orden #{{step_1_trigger.data.order_number}}",
-                "description": "El sistema de IA detectó un riesgo de {{step_3_webhook_ai.response.body.risk_score}}.\nDetalles del cliente: {{step_1_trigger.data.email}}"
+                }
               }
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "billing_and_compliance": {
+    "cost_center": "CC-DEVOPS-2026",
+    "budget_allocation": {
+      "fiscal_year": 2026,
+      "quarters": {
+        "Q1": {
+          "allocated": 150000,
+          "spent": 142300,
+          "breakdown": [
+            {"service": "compute", "amount": 90000},
+            {"service": "storage", "amount": 30000},
+            {"service": "bandwidth", "amount": 22300}
+          ]
+        },
+        "Q2": {
+          "allocated": 160000,
+          "spent": 0,
+          "breakdown": []
+        }
+      }
+    },
+    "compliance_standards": {
+      "certifications": [
+        {
+          "name": "ISO_27001",
+          "audit_date": "2025-11-15",
+          "auditor": "GlobalCert LLC",
+          "findings": {
+            "critical": 0,
+            "minor": 2,
+            "remediation_plan": [
+              {
+                "issue_id": "MIN-01",
+                "description": "Rotate secondary API keys older than 90 days",
+                "assigned_to": {
+                  "user_id": "usr-883",
+                  "team": "SecOps",
+                  "contacts": {
+                    "email": "secops-lead@empresa.com",
+                    "phone_ext": 4092
+                  }
+                },
+                "deadline": "2026-03-30",
+                "status": "in_progress"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
 }
